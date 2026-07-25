@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>내 정보 - 게임리뷰</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <style>
+        header.top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 24px;
+            background-color: #000;
+            color: white;
+            height: 64px;
+            box-sizing: border-box;
+        }
+
+        header.top-bar h2 a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        header.top-bar .user-info a {
+            color: violet;
+            margin-left: 12px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        .profile-info, .update-form, .review-list {
+            margin-bottom: 40px;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        .review-card {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+
+        .review-card:last-child {
+            border-bottom: none;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input, select {
+            padding: 8px;
+            width: 100%;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .pagination a {
+            margin: 0 6px;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .pagination a.current {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<header class="top-bar">
+    <h2><a th:href="@{/projectB/}">게임리뷰</a></h2>
+    <div class="user-info">
+        <th:block th:if="${session.email != null}">
+            <span>[[${session.email}]]</span>
+            <a th:href="@{/projectB/mypage}">마이페이지</a>
+            <a th:href="@{/projectB/game/list}">게임 목록</a>
+            <a th:href="@{/projectB/logout}">로그아웃</a>
+        </th:block>
+        <th:block th:if="${session.email == null}">
+            <a th:href="@{/projectB/login}">로그인</a>
+            <a th:href="@{/projectB/register}">회원가입</a>
+            <a th:href="@{/projectB/game/list}">게임 목록</a>
+        </th:block>
+    </div>
+</header>
+
+<div class="container">
+    <h2>마이페이지</h2>
+
+    <div class="profile-info">
+        <p><strong>이메일:</strong> <span th:text="${user.email}">example@example.com</span></p>
+        <p><strong>이름:</strong> <span th:text="${user.name}">홍길동</span></p>
+        <p><strong>선호 장르:</strong> <span th:text="${user.favoriteGenre.name}">RPG</span></p>
+    </div>
+
+    <div class="update-form">
+        <h3>개인정보 수정</h3>
+        <form method="post" th:action="@{/projectB/user/update}" th:object="${user}">
+            <label for="passwd">새 비밀번호</label>
+            <input type="password" id="passwd" name="passwd" />
+
+            <label for="favoriteGenreId">선호 장르</label>
+            <select name="favoriteGenreId" id="favoriteGenreId">
+                <option th:each="g : ${genres}" th:value="${g.id}" th:text="${g.name}" th:selected="${g.id == user.favoriteGenre.id}"></option>
+            </select>
+
+            <button type="submit">수정하기</button>
+        </form>
+    </div>
+
+    <div class="review-list">
+        <h3>작성한 리뷰</h3>
+        <div th:if="${#lists.isEmpty(reviewPage.content)}">
+            <p>아직 작성한 리뷰가 없습니다.</p>
+        </div>
+        <div th:each="review : ${reviewPage.content}" class="review-card">
+            <p>
+                <strong th:text="${review.game.title}">게임 제목</strong> - 
+                <span th:text="${review.rating}">95</span>점
+            </p>
+            <p th:text="${review.content}">리뷰 내용</p>
+            <a th:href="@{/projectB/game/detail/{id}(id=${review.game.id})}">게임 상세 보기 →</a>
+        </div>
+
+        <!-- 리뷰 페이지네이션 -->
+        <div class="pagination" th:if="${reviewPage.totalPages > 1}">
+            <a th:each="i : ${#numbers.sequence(0, reviewPage.totalPages - 1)}"
+               th:href="@{/projectB/mypage(reviewPage=${i})}"
+               th:text="${i + 1}"
+               th:classappend="${i == reviewPage.number} ? 'current' : ''">
+            </a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

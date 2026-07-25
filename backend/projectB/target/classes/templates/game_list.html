@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>게임 목록</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <style>
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 24px;
+            background-color: #000;
+            color: white;
+        }
+
+        .top-bar h2 a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .top-bar .user-info a {
+            color: violet;
+            margin-left: 10px;
+        }
+
+        .main-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .search-form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-form input[type="text"],
+        .search-form select {
+            padding: 8px;
+            font-size: 16px;
+        }
+
+        .search-form select {
+            width: 160px;
+        }
+
+        .search-form button {
+            padding: 8px 16px;
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .game-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .game-card {
+            background-color: #fff;
+            width: 240px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .game-card img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+        }
+
+        .game-card .info {
+            padding: 15px;
+        }
+
+        .game-card h3 {
+            font-size: 18px;
+            margin: 0 0 10px 0;
+        }
+
+        .game-card p {
+            font-size: 14px;
+            color: #444;
+        }
+
+        .score-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+
+        .score-green {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .score-yellow {
+            background-color: #FFEB3B;
+            color: #333;
+        }
+
+        .score-red {
+            background-color: #F44336;
+            color: white;
+        }
+
+        .pagination a {
+            margin: 0 5px;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .pagination a.current-page {
+            font-weight: bold;
+            color: #007bff;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<header class="top-bar">
+    <h2><a th:href="@{/projectB/}">게임리뷰</a></h2>
+    <div class="user-info">
+        <th:block th:if="${session.email != null}">
+            <span>[[${session.email}]]</span>
+            <a th:href="@{/projectB/logout}">로그아웃</a>
+            <a th:href="@{/projectB/mypage}">마이페이지</a>
+        </th:block>
+        <th:block th:if="${session.email == null}">
+            <a th:href="@{/projectB/register}">회원가입</a>
+            <a th:href="@{/projectB/login}">로그인</a>
+        </th:block>
+    </div>
+</header>
+
+<div class="main-container">
+    <h2>게임 목록</h2>
+
+    <!-- 검색 + 정렬 폼 -->
+    <form method="get" th:action="@{/projectB/game/list}" class="search-form">
+        <input type="text" name="keyword" placeholder="게임 제목 검색..." th:value="${keyword}" />
+
+        <select name="genreId">
+            <option value="">전체 장르</option>
+            <option th:each="g : ${genres}"
+                    th:value="${g.id}"
+                    th:text="${g.name}"
+                    th:selected="${genreId != null and genreId == g.id}">
+            </option>
+        </select>
+
+		<select name="sort">
+		    <option value="" th:selected="${selectedSort == null or selectedSort == ''}">정렬 없음</option>
+		    <option value="recent" th:selected="${selectedSort == 'recent'}">최신순</option>
+		    <option value="popular" th:selected="${selectedSort == 'popular'}">인기순</option>
+		</select>
+
+        <button type="submit">검색</button>
+    </form>
+
+    <!-- 게임 카드 리스트 -->
+    <div class="game-container">
+        <div class="game-card" th:each="game : ${games.content}">
+            <img th:src="${game.imageUrl}" alt="게임 이미지" />
+            <div class="info">
+                <h3>
+                    <a th:href="@{/projectB/game/detail/{id}(id=${game.id}, page=${games.number}, keyword=${keyword}, genreId=${genreId}, sort=${sort})}"
+                       th:text="${game.title}">
+                        게임제목
+                    </a>
+                </h3>
+                <p th:text="${game.description}">설명</p>
+                <p>출시년도: <span th:text="${game.releaseYear}"></span></p>
+
+                <span th:if="${game.avgRating != null and game.avgRating >= 75}" class="score-badge score-green" th:text="${T(java.lang.String).format('%.0f', game.avgRating)}">85</span>
+                <span th:if="${game.avgRating != null and game.avgRating >= 50 and game.avgRating < 75}" class="score-badge score-yellow" th:text="${T(java.lang.String).format('%.0f', game.avgRating)}">68</span>
+                <span th:if="${game.avgRating != null and game.avgRating < 50}" class="score-badge score-red" th:text="${T(java.lang.String).format('%.0f', game.avgRating)}">42</span>
+                <span th:if="${game.avgRating == null}" class="score-badge score-yellow">-</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 페이지네이션 -->
+    <div class="pagination" style="text-align: center; margin-top: 30px;">
+        <th:block th:if="${games.totalPages > 1}">
+            <a th:each="i : ${#numbers.sequence(0, games.totalPages - 1)}"
+               th:href="@{/projectB/game/list(page=${i}, keyword=${keyword}, genreId=${genreId}, sort=${sort})}"
+               th:text="${i + 1}"
+               th:classappend="${i == games.number} ? 'current-page' : ''">
+            </a>
+        </th:block>
+    </div>
+</div>
+
+</body>
+</html>
